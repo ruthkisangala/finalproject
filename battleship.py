@@ -1,387 +1,298 @@
 from random import randrange
 
-def creating_grid():
+def creating_grid(): #to create grid
     while True:
         try:
-            length_of_grid_input = int(input("How big is the side of the grid? "))
-            if length_of_grid_input <= 0:
+            length_of_grid = int(input("How big is the side of the grid? "))
+            if length_of_grid <= 0:
                 print("Grid size must be at least 1.")
-            elif length_of_grid_input > 100:
+            elif length_of_grid > 100:
                 print("Maximal size of the grid is 100.")
             else:
                 break
         except ValueError:
             print("Invalid input. Please enter an integer.")
-    grid_local = [["." for x in range(length_of_grid_input)] for y in range(length_of_grid_input)]
-    return grid_local, length_of_grid_input
+    grid = [["." for x in range(length_of_grid)] for y in range(length_of_grid)] #creates a list (y) with lists (x) in it
+    return grid, length_of_grid
 
-def printing_grid(alphabet, grid_local):
-    grid_for_printing = [list(row) for row in grid_local]
+def printing_grid(grid):
+    grid_for_printing = [list(row) for row in grid] #map which will be visible to the player
+    #removes all the ships from the map so player can't see them
     for row, x in enumerate(grid_for_printing):
         for column, y in enumerate(x):
-            for size in range(1,6):
-                for letter in alphabet:
-                    ship_code = ("O" + str(size) + (str(letter)))
-                    grid_for_printing[row][column] = grid_for_printing[row][column].replace(ship_code, ".")
+            if "O" in y: 
+                grid_for_printing[row][column] = grid_for_printing[row][column].replace(y, ".")
+    #printing grid
+    print() #to print an emptry row, easier visibility afterwards
     for row in grid_for_printing:
         print(row)
+    print() #to print an emptry row, easier visibility afterwards
 
-def testing_printing_grid(grid_local):
-    print("\nTesting if printing grid works:")
-    for row in grid_local:
-        print(row)
-
-def defining_number_ships_one_size_ships(grid):
-    max_ships = int(((len(grid)**2)/2)/2) #divided by two because two players and then again divided by two so half of the spaces remain empty to be able to make moves
-    while True:
-        try:
-            number_ships_input = int(input("Enter the number of ships: "))
-            if number_ships_input <= 0 or number_ships_input > max_ships:
-                print("The number of ships must be at least 1, but cannot be more than " + str(max_ships) + ". ")
-            else:
-                return number_ships_input
-        except ValueError:
-            print("Invalid input. Please enter an integer.")
-
-def defining_size_number_ships_bigger_ships(alphabet, length_of_grid):
-    fleet_size_local = {}
-    for size in range (1, 6):
+def defining_size_number_ships(alphabet, length_of_grid):
+    fleet_size = {}
+    for size in range (1, length_of_grid + 1): #so ships cannot exceed size of grid
         while True:
             try: 
                 ship_amount = int(input("How many ships with size " + str(size) + " do you want? "))
-                if ship_amount > 24: 
-                    print("Too many ships, limit is 24.")
+                if ship_amount > 5: 
+                    print("Too many ships, limit is 5.")
                 elif ship_amount > 0:
-                    for _ in range(0, ship_amount):
-                        fleet_size_local[str(size) + str(alphabet[_])] = int(size)
+                    for ship in range(0, ship_amount):
+                        fleet_size[str(size) + str(alphabet[ship])] = int(size) #creates dictionary of ships with their name as a string (eg. 3a) and their size as an integer (in given example = 3) 
                     break
-                elif ship_amount == 0:
+                elif ship_amount == 0: #if no ships of a certain size needed
                     break
             except ValueError:
                 "Invalid answer. Please write a number."
-    return fleet_size_local
+    return fleet_size
 
-def player_ship_placing_one_size_ships(grid_local, number_ships, length_of_grid):
-    player_ships = []
-    for i in range(1, number_ships + 1):
-        while True:
-            try:
-                player_ship_x_input = int(input(f"Please enter the x coordinate for your ship {i}: "))
-                player_ship_y_input = int(input(f"Please enter the y coordinate for your ship {i}: "))
-            except ValueError:
-                print("Please enter an integer.")
-                continue
-            if player_ship_x_input < 1 or player_ship_y_input < 1 or player_ship_x_input > length_of_grid or player_ship_y_input > length_of_grid:
-                print(f"One of the coordinates for ship {i} is out of range. The coordinate has to be between 0 and " + str(length_of_grid) + ".")
-            else:
-                if grid_local[player_ship_x_input - 1][player_ship_y_input -1 ] == ".":
-                    grid_local[player_ship_x_input - 1][player_ship_y_input - 1] = "X"
-                    break
-                else:
-                    print("Field already occupied.")
-        player_ships.append([player_ship_x_input, player_ship_y_input])
-    return player_ships, grid_local
-
-def player_ship_placing_bigger_ships(fleet_size_local, grid_local, length_of_grid):
+def player_ship_placing(fleet_size_local, grid, length_of_grid):
     for ship_name, ship_size in fleet_size_local.items():
-        while True:
+        while True: #to determine whether ship should be placed vertically or horizontally
             try:
-                orientation = str(input("Do you want to place the ship with size " + str(ship_name) + " vertically (v) or horizontally (h)? "))
-                if orientation == "v" or orientation == "h":
-                    break
-                else:
+                orientation = input("\nDo you want to place the ship with size " + str(ship_name) + " vertically (v) or horizontally (h)? ")
+                if orientation.lower() not in ["v", "h"]:
                     print("Invalid answer. Please choose \"v\" or \"h\".")
             except ValueError:
-                print("Invalid answer. Please choose \"v\" or \"h\".")
-
-        while True:
+                print("No string. Please choose \"v\" or \"h\".")
+            #to get x and y coordinates
             try:
                 x_coordinate_ship = int(input("In which column (x) should the ship with size " + str(ship_name) + " start? "))
                 y_coordinate_ship = int(input("In which row (y) should the ship with size " + str(ship_name) + " start? "))
             except ValueError:
                 print("Invalid input")
                 continue 
-
-            if x_coordinate_ship < 1 or x_coordinate_ship > length_of_grid or y_coordinate_ship < 1 or y_coordinate_ship > length_of_grid:
+            
+            #checks if coordinates lie on grid
+            if x_coordinate_ship < 1 or x_coordinate_ship > length_of_grid or y_coordinate_ship < 1 or y_coordinate_ship > length_of_grid: 
                 print("Coordinate has to be between 1 and " + str(length_of_grid) + ".")
+            #checks if ship can fit on grid with given coordinates
             elif (x_coordinate_ship -1 + int(ship_size)) > length_of_grid and orientation == "h":
                 print("Ship cannot fit on grit. Choose another starting point.")
             elif (y_coordinate_ship -1 + int(ship_size)) > length_of_grid and orientation == "v":
                 print("Ship cannot fit on grit. Choose another starting point.")
             else:
                 valid_placement = True
-
+                # checks if space is still empty, for vertical placement
                 if orientation == "v":
                     for i in range(ship_size):
-                        if grid_local[y_coordinate_ship - 1 + i][x_coordinate_ship - 1] != ".":
+                        if grid[y_coordinate_ship - 1 + i][x_coordinate_ship - 1] != ".":
                             print("One of the spaces is already taken. Choose another starting point.")
                             valid_placement = False
                             break
-                    if valid_placement:
+                    # places ship if coordinates are still empty
+                    if valid_placement: 
                         for i in range(ship_size):
-                            grid_local[y_coordinate_ship - 1 + i][x_coordinate_ship - 1] = "X" + str(ship_name)
-                        printing_grid(alphabet, grid_local)
+                            grid[y_coordinate_ship - 1 + i][x_coordinate_ship - 1] = "X" + str(ship_name)
+                        printing_grid(grid)
                         break
+                # checks if space is still empty, for horizontal placement
                 elif orientation == "h":
                     for i in range(ship_size):
-                        if grid_local[y_coordinate_ship - 1][x_coordinate_ship - 1 + i] != ".":
+                        if grid[y_coordinate_ship - 1][x_coordinate_ship - 1 + i] != ".":
                             print("One of the spaces is already taken. Choose another starting point.")
                             valid_placement = False
                             break
+                    # places ship if coordinates are still empty
                     if valid_placement:
                         for i in range(ship_size):
-                            grid_local[y_coordinate_ship - 1][x_coordinate_ship - 1 + i] = "X" + str(ship_name)
-                        printing_grid(alphabet, grid_local)
+                            grid[y_coordinate_ship - 1][x_coordinate_ship - 1 + i] = "X" + str(ship_name)
                         break
-    return grid_local
 
-def computer_ship_placing_bigger_ships(fleet_size_local, grid_local, length_of_grid):
+    return grid
+
+def computer_ship_placing(fleet_size_local, grid, length_of_grid):
     for ship_name, ship_size in fleet_size_local.items():
         while True:
-            orientation_random_number = randrange(0, 2)
+            #to determine whether ship should be placed vertically or horizontally
+            orientation_random_number = randrange(0, 2) 
             if orientation_random_number == 0:
                 orientation = "v"
             elif orientation_random_number == 1:
                 orientation = "h"
-            print(orientation)
-        
+
+            #to get x and y coordinates
             x_coordinate_ship = randrange(0, length_of_grid)
             y_coordinate_ship = randrange(0, length_of_grid)
-            print(x_coordinate_ship, y_coordinate_ship)
 
+            #checks if ship can fit on grid with given coordinates
             if (x_coordinate_ship + int(ship_size)) > length_of_grid and orientation == "h":
-                print("Ship cannot fit on grit. Choose another starting point.")
+                continue
             elif (y_coordinate_ship + int(ship_size)) > length_of_grid and orientation == "v":
-                print("Ship cannot fit on grit. Choose another starting point.")
+                continue
             else:
                 valid_placement = True
 
+                # checks if space is still empty, for vertical placement
                 if orientation == "v":
                     for i in range(ship_size):
-                        if grid_local[y_coordinate_ship + i][x_coordinate_ship] != ".":
-                            print("One of the spaces is already taken. Choose another starting point.")
+                        if grid[y_coordinate_ship + i][x_coordinate_ship] != ".":
                             valid_placement = False
                             break
+                    # places ship if coordinates are still empty
                     if valid_placement:
                         for i in range(ship_size):
-                            grid_local[y_coordinate_ship + i][x_coordinate_ship] = "O" + str(ship_name)
-                        printing_grid(alphabet, grid_local)
+                            grid[y_coordinate_ship + i][x_coordinate_ship] = "O" + str(ship_name)
                         break
+                # checks if space is still empty, for horizontal placement
                 elif orientation == "h":
                     for i in range(ship_size):
-                        if grid_local[y_coordinate_ship][x_coordinate_ship + i] != ".":
-                            print("One of the spaces is already taken. Choose another starting point.")
+                        if grid[y_coordinate_ship][x_coordinate_ship + i] != ".":
                             valid_placement = False
                             break
+                    # places ship if coordinates are still empty
                     if valid_placement:
                         for i in range(ship_size):
-                            grid_local[y_coordinate_ship][x_coordinate_ship + i] = "O" + str(ship_name)
-                        printing_grid(alphabet, grid_local)
+                            grid[y_coordinate_ship][x_coordinate_ship + i] = "O" + str(ship_name)
                         break
-    return grid_local
+    return grid
 
-def computer_ship_placing_one_size_ships(grid_local, number_ships, length_of_grid):
-    computer_ships = []
-    for i in range(0, number_ships):
-        while True:
-            computer_ship_x_random = randrange(0,length_of_grid)
-            computer_ship_y_random = randrange(0,length_of_grid)
-            #print("(" + str(computer_ship_x_random) + "/" + str(computer_ship_y_random) + ")")
-            if grid_local[computer_ship_x_random][computer_ship_y_random] == ".":
-                grid_local[computer_ship_x_random][computer_ship_y_random] = "O"
-                break
-        computer_ships.append([computer_ship_x_random,computer_ship_y_random])
-    return computer_ships, grid_local
-
-def player_move_one_size_ships(grid_local, length_of_grid):
+def player_move(grid, length_of_grid):
     while True:
+        #to get coordinates for move
         try:
-            player_move_x_input = int(input(f"Please enter the x coordinate for your move: "))
-            player_move_y_input = int(input(f"Please enter the y coordinate for your move: "))
+            player_move_x = int(input(f"Please enter the x coordinate for your move: "))
+            player_move_y = int(input(f"Please enter the y coordinate for your move: "))
         except ValueError:
             print("Please enter an integer.")
             continue
-        if player_move_x_input < 1 or player_move_y_input < 1 or player_move_x_input > length_of_grid or player_move_y_input > length_of_grid:
-            print(f"One of the coordinates is out of range. The coordinate has to be between 0 and " + str(length_of_grid) + ".")
-        else:
-            if grid_local[player_move_x_input - 1][player_move_y_input -1 ] == ".":
-                grid_local[player_move_x_input - 1][player_move_y_input - 1] = "x"
-                return grid_local
-            elif grid_local[player_move_x_input - 1][player_move_y_input -1 ] == "O":
-                grid_local[player_move_x_input - 1][player_move_y_input - 1] = "Ø"
-                print("You destroyed a ship.")
-                return grid_local
-            elif grid_local[player_move_x_input - 1][player_move_y_input -1 ] == "X":
-                print("This space is occupied by your own boat!")
-            else:
-                print("Someone already played here.")
-
-def player_move_bigger_ships(grid_local, length_of_grid):
-    while True:
-        try:
-            player_move_x_input = int(input(f"Please enter the x coordinate for your move: "))
-            player_move_y_input = int(input(f"Please enter the y coordinate for your move: "))
-        except ValueError:
-            print("Please enter an integer.")
-            continue
-        if player_move_x_input < 1 or player_move_y_input < 1 or player_move_x_input > length_of_grid or player_move_y_input > length_of_grid:
-            print(f"One of the coordinates is out of range. The coordinate has to be between 0 and " + str(length_of_grid) + ".")
-        else:
-            if grid_local[player_move_x_input - 1][player_move_y_input -1] == ".":
-                grid_local[player_move_x_input - 1][player_move_y_input - 1] = "x"
-                return grid_local
-            elif grid_local[player_move_x_input - 1][player_move_y_input -1][0] == "O":
-                name_of_destroyed_boat = grid_local[player_move_x_input - 1][player_move_y_input -1]
-                grid_local[player_move_x_input - 1][player_move_y_input - 1] = "Ø" + grid_local[player_move_x_input - 1][player_move_y_input - 1][1:]
-                for row, x in enumerate(grid_local):
-                    for column, y in enumerate(x):
-                        if y == name_of_destroyed_boat:
-                            print(f"Boat of size {str(name_of_destroyed_boat[1])} hit, but not completely destroyed.")
-                        elif y != name_of_destroyed_boat:
-                            print(f"You destroyed a ship of the sice {str(name_of_destroyed_boat[1])}.")
-                return grid_local
-            elif grid_local[player_move_x_input - 1][player_move_y_input -1][0] == "X":
-                print("This space is occupied by your own boat!")
-            else:
-                print("Someone already played here.")
-    
-def computer_move_bigger_ships(grid_local, length_of_grid):
-    while True:
-        computer_move_x_input = randrange(0, length_of_grid)
-        computer_move_y_input = randrange(0, length_of_grid)
         
-        if grid_local[computer_move_x_input - 1][computer_move_y_input -1] == ".":
-            grid_local[computer_move_x_input - 1][computer_move_y_input - 1] = "o"
-            return grid_local
-        elif grid_local[computer_move_x_input - 1][computer_move_y_input -1][0] == "X":
-            name_of_destroyed_boat = grid_local[computer_move_x_input - 1][computer_move_y_input -1]
-            grid_local[computer_move_x_input - 1][computer_move_y_input - 1] = "X̶" + grid_local[computer_move_x_input - 1][computer_move_y_input - 1][1:]
-            for row, x in enumerate(grid_local):
-                for column, y in enumerate(x):
-                    if y == name_of_destroyed_boat:
-                        print(f"Boat of size {str(name_of_destroyed_boat[1])} hit, but not completely destroyed.")
-                        return
-                    elif y != name_of_destroyed_boat:
-                        print(f"You destroyed a ship of the sice {str(name_of_destroyed_boat[1])}.")
-                        return
-            return grid_local
-        elif grid_local[computer_move_x_input - 1][computer_move_y_input -1][0] == "O":
-            print("This space is occupied by your own boat!")
+        #checking if coordinates don't lie on the grid
+        if player_move_x < 1 or player_move_y < 1 or player_move_x > length_of_grid or player_move_y > length_of_grid:
+            print(f"One of the coordinates is out of range. The coordinate has to be between 0 and {length_of_grid}.")
+        
         else:
-            print("Someone already played here.")
+            # checking status of coordinate
+            if grid[player_move_y -1][player_move_x - 1] == ".": #empty space
+                grid[player_move_y - 1][player_move_x - 1] = "x"
+                return grid
+            elif grid[player_move_y -1][player_move_x - 1][0] == "O": #ship of computer
+                name_of_hit_ship = grid[player_move_y -1][player_move_x - 1] 
+                grid[player_move_y - 1][player_move_x - 1] = "Ø" + grid[player_move_y - 1][player_move_x - 1][1:]
+                #to determine if ship was destroyed or only hit
+                found_ship_parts = False
+                for row, x in enumerate(grid):
+                    for column, y in enumerate(x):
+                        if y == name_of_hit_ship:
+                            found_ship_parts = True
+                            print(f"You hit a ship of size {str(name_of_hit_ship[1])}, bud you didn't completely destroy it.")
+                            return grid
+                        elif y != name_of_hit_ship:
+                            found_ship_parts = False #no found ship parts until some are found
+                if not found_ship_parts: #searched the whole grid, but no ship parts found
+                    print(f"You destroyed a ship of size {str(name_of_hit_ship[1])}.")
+                    return grid
+            elif grid[player_move_y -1][player_move_x - 1][0] == "X": #own ship
+                print("This space is occupied by your own ship!")
+                continue
+            else: #already occupied space
+                print("Someone already played here.")
+                continue
 
-def computer_move_one_size_ships(grid_local, length_of_grid):
-    while True:
-        computer_ship_x_random = randrange(0,length_of_grid)
-        computer_ship_y_random = randrange(0,length_of_grid)
-        #print("(" + str(computer_ship_x_random) + "/" + str(computer_ship_y_random) + ")")
-        if grid_local[computer_ship_x_random][computer_ship_y_random] == ".":
-            grid_local[computer_ship_x_random][computer_ship_y_random] = "o"
-            return grid_local
-        elif grid_local[computer_ship_x_random][computer_ship_y_random] == "X":
-            grid_local[computer_ship_x_random][computer_ship_y_random] = "X̶"
-            print("Computer destroyed one of your ships.")
-            return grid_local
-        elif grid_local[computer_ship_x_random][computer_ship_y_random] == "O":
-            print("Sorry Computer. This space is occupied by your own boat!")
-        else:
-            print("Someone already played here.")
+def computer_move(grid, length_of_grid, damaged_ship):
+    valid_move = False
 
-def evaluate_X_bigger_ships(grid_local):
-    for row, x in enumerate(grid_local):
+    if damaged_ship: #computer tries to move close to a damaged ship to destroy it completely
+        while not valid_move:
+            for i in range(1, length_of_grid):
+                for move in [(i,0), (-i,0), (0,i),(0,-i)]:
+                    possible_computer_move_x = damaged_ship[0] -1 + move[0]
+                    possible_computer_move_y = damaged_ship[1] -1 + move[1]
+                    valid_move = computer_checking_move(grid, possible_computer_move_x, possible_computer_move_y)
+                    if valid_move:
+                        break
+                if valid_move:
+                    break
+
+    # gets coordinates if no damaged ship
+    while not valid_move:
+        possible_computer_move_x = randrange(0, length_of_grid)
+        possible_computer_move_y = randrange(0, length_of_grid)
+        valid_move = computer_checking_move(grid, possible_computer_move_x, possible_computer_move_y)
+
+    # computer moves
+    computer_move_x = possible_computer_move_x
+    computer_move_y = possible_computer_move_y
+    if grid[computer_move_y][computer_move_x] == ".": #empty space
+        grid[computer_move_y][computer_move_x] = "o"
+        return grid, damaged_ship
+    elif grid[computer_move_y][computer_move_x][0] == "X": #ship of player
+        name_of_hit_ship = grid[computer_move_y][computer_move_x]
+        grid[computer_move_y][computer_move_x] = "*" + grid[computer_move_y][computer_move_x][1:]
+        #to determine if ship was destroyed or only hit
+        found_ship_parts = False
+        for row, x in enumerate(grid):
+            for column, y in enumerate(x):
+                if y == name_of_hit_ship:
+                    found_ship_parts = True
+                    print(f"Computer hit a ship of size {str(name_of_hit_ship[1])}, but didn't completely destroy it.")
+                    damaged_ship = (computer_move_x + 1, computer_move_y + 1) #saves the coordinates of the damaged ship so the computer can try to move close to it in the next round
+                    return grid, damaged_ship
+                elif y != name_of_hit_ship:
+                    found_ship_parts = False #no found ship parts until some are found
+        if not found_ship_parts: #searched the whole grid, but no ship parts found
+                damaged_ship = None
+                print(f"Computer destroyed a ship of size {str(name_of_hit_ship[1])}.")
+                return grid, damaged_ship
+            
+def computer_checking_move(grid, possible_computer_move_x, possible_computer_move_y):
+    if not (0 <= possible_computer_move_x < length_of_grid and 0 <= possible_computer_move_y < length_of_grid):
+        valid_move = False
+        return valid_move
+    if grid[possible_computer_move_y][possible_computer_move_x] in [".", "X"]:
+        valid_move = True
+    else:
+        valid_move = False
+    return valid_move
+
+def evaluate_all_ships_destroyed(grid, not_destroyed_ship_sign, destroyed_ship_sign):
+    for row, x in enumerate(grid):
         for column, y in enumerate(x):
-            if y[0] == "X":
-                print("Game continues.")
+            if not_destroyed_ship_sign in y:
                 return True, None
-    return False, "X̶"
+    return False, destroyed_ship_sign
 
-def evaluate_O_bigger_ships(grid_local):
-    for row, x in enumerate(grid_local):
-        for column, y in enumerate(x):
-            if "0" in y:
-                print(f"Game continues. Found 'O' in cell [{row+1}][{column+1}].")
-                return True, None
-    return False, "Ø"
-
-def evaluate_X_one_size_ships(grid_local):
-    for row, x in enumerate(grid_local):
-        for column, y in enumerate(x):
-            if y == "X":
-                return True, None
-    return False, "X̶"
-
-def evaluate_O_one_size_ships(grid_local):
-    for row, x in enumerate(grid_local):
-        for column, y in enumerate(x):
-            if y == "O":
-                return True, None
-    return False, "Ø"
-
-def preparation_one_size_ships(): 
-    grid, length_of_grid = creating_grid()
+def preparation():
+    #creating grid
+    grid, length_of_grid = creating_grid() 
+    # determining how many ships in which sizes
+    fleet_size = defining_size_number_ships(alphabet, length_of_grid)
+    # player places ships
+    player_ship_placing(fleet_size, grid, length_of_grid)
     printing_grid(grid)
-
-    number_ships = defining_number_ships_one_size_ships(grid)
-    position_player_ships, grid_with_player_ships = player_ship_placing_one_size_ships(grid, number_ships, length_of_grid)
-    #print(position_player_ships)
-    #printing_grid(grid_with_player_ships)
-    position_computer_ships, grid_with_all_ships = computer_ship_placing_one_size_ships(grid_with_player_ships, number_ships, length_of_grid)
-    printing_grid(grid_with_all_ships)
-    return grid_with_all_ships, length_of_grid
-
-def game_one_size_ships(grid_with_all_ships, length_of_grid):
-    game_continues = True
-
-    while game_continues:
-        grid_with_all_ships = player_move_one_size_ships(grid_with_all_ships, length_of_grid)
-        game_continues, loser_sign = evaluate_O_one_size_ships(grid_with_all_ships)
-        if not game_continues:
-            break
-        grid_with_all_ships = computer_move_one_size_ships(grid_with_all_ships, length_of_grid)
-        game_continues, loser_sign = evaluate_X_one_size_ships(grid_with_all_ships)
-
-    if loser_sign == "Ø":
-        print("Player won.")
-    elif loser_sign == "X̶":
-        print("Computer won.")
-
-
-#grid_with_all_ships_global, length_of_grid_global = preparation_one_size_ships()
-#game_one_size_ships(grid_with_all_ships_global, length_of_grid_global)
-
-alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
-
-def preparation_bigger_ships():
-    grid, length_of_grid = creating_grid()
-    fleet_size = defining_size_number_ships_bigger_ships(alphabet, length_of_grid)
-    print("Fleet size is:" + str(fleet_size))
-    player_ship_placing_bigger_ships(fleet_size, grid, length_of_grid)
-    computer_ship_placing_bigger_ships(fleet_size, grid, length_of_grid)
+    #computer places ships
+    computer_ship_placing(fleet_size, grid, length_of_grid)
     return grid, length_of_grid
 
-def game_bigger_ships(grid, length_of_grid):
+def game(grid, length_of_grid, damaged_ship):
     game_continues = True
-
     while game_continues:
-        grid = player_move_bigger_ships(grid, length_of_grid)
-       # printing_grid(alphabet, grid_with_all_ships)
-        testing_printing_grid(grid)
-        game_continues, loser_sign = evaluate_O_bigger_ships(grid)
-        if not game_continues:
+        #player plays
+        print("Your turn.")
+        grid = player_move(grid, length_of_grid)
+        printing_grid(grid)
+        #evaluates if player won
+        game_continues, loser_sign = evaluate_all_ships_destroyed(grid, "O", "Ø")
+        if not game_continues: #exits loop if player won
             break
-        grid = computer_move_bigger_ships(grid, length_of_grid)
-        testing_printing_grid(grid)
-        game_continues, loser_sign = evaluate_X_bigger_ships(grid)
-    
+        #computer plays
+        print("Computer's turn.")
+        grid, damaged_ship = computer_move(grid, length_of_grid, damaged_ship)
+        printing_grid(grid)
+        #evaluates if computer won
+        game_continues, loser_sign = evaluate_all_ships_destroyed(grid, "X", "*")
+        
+    # determines who won
     if loser_sign == "Ø":
         print("Player won.")
-    elif loser_sign == "X̶":
+    elif loser_sign == "*":
         print("Computer won.")
 
-grid, length_of_grid = preparation_bigger_ships()
 
-game_bigger_ships(grid, length_of_grid)
+alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+damaged_ship = ()
 
-
+grid, length_of_grid = preparation()
+game(grid, length_of_grid, damaged_ship)
 
 
